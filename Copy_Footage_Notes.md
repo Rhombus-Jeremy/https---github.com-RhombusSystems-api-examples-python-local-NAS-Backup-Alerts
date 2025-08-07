@@ -6,14 +6,18 @@
 
 This script supports **TWO MODES** for downloading camera footage from Rhombus cameras:
 
-### 🕒 **MODE 1: MANUAL MODE** (Original Functionality)
+### 🕒 MODE 1: MANUAL MODE (Original Functionality)
+
 Downloads footage based on specified time ranges - ideal for:
+
 - Scheduled daily/weekly backups
 - Specific incident investigation
 - Regular archival processes
 
-### 🚨 **MODE 2: ALERT MODE** (New Functionality) 
+### 🚨 MODE 2: ALERT MODE (New Functionality)
+
 Downloads footage based on policy alerts - perfect for:
+
 - Automatic incident capture
 - Security event documentation
 - Compliance requirements
@@ -23,6 +27,7 @@ Downloads footage based on policy alerts - perfect for:
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 ```bash
 # Install Python dependencies
 pip install -r requirements.txt
@@ -35,12 +40,14 @@ pip install -r requirements.txt
 
 ### Basic Usage
 
-**📥 Download Recent Alerts (Recommended)**
+#### 📥 Download Recent Alerts (Recommended)
+
 ```bash
 python3 copy_footage_script_threading.py -a YOUR_API_KEY --alerts
 ```
 
-**📅 Download Last Hour (Manual)**
+#### 📅 Download Last Hour (Manual)
+
 ```bash
 python3 copy_footage_script_threading.py -a YOUR_API_KEY
 ```
@@ -50,17 +57,20 @@ python3 copy_footage_script_threading.py -a YOUR_API_KEY
 ## ⚙️ Command Line Arguments
 
 ### 🔑 Required Arguments
+
 | Argument | Short | Description |
 |----------|-------|-------------|
 | `--api_key` | `-a` | **Rhombus API key** (Get from Console → API Management) |
 
 ### 🕒 Manual Mode Arguments
+
 | Argument | Short | Default | Description |
 |----------|-------|---------|-------------|
 | `--start_time` | `-s` | 1 hour ago | Start time in epoch seconds ([converter](https://www.epochconverter.com/)) |
 | `--duration` | `-u` | 3600 | Duration in seconds (3600 = 1 hour) |
 
 ### 🚨 Alert Mode Arguments
+
 | Argument | Short | Default | Description |
 |----------|-------|---------|-------------|
 | `--alerts` | `-al` | - | **Enable alert-based download mode** |
@@ -70,6 +80,7 @@ python3 copy_footage_script_threading.py -a YOUR_API_KEY
 | `--alert_buffer` | `-ab` | 30 | Buffer time in seconds before/after each alert |
 
 ### 🔧 Common Arguments (Both Modes)
+
 | Argument | Short | Description |
 |----------|-------|-------------|
 | `--cert` | `-c` | Path to API certificate (optional) |
@@ -85,12 +96,14 @@ python3 copy_footage_script_threading.py -a YOUR_API_KEY
 
 ### 📅 Manual Mode Examples
 
-**Basic: Download last hour from all cameras**
+#### Basic: Download last hour from all cameras
+
 ```bash
 python3 copy_footage_script_threading.py -a YOUR_API_KEY
 ```
 
-**Advanced: Specific time period from specific camera**
+#### Advanced: Specific time period from specific camera
+
 ```bash
 python3 copy_footage_script_threading.py \
   -a YOUR_API_KEY \
@@ -99,7 +112,8 @@ python3 copy_footage_script_threading.py \
   -cam CAMERA_UUID
 ```
 
-**Location-based: All cameras at specific location via WAN**
+#### Location-based: All cameras at specific location via WAN
+
 ```bash
 python3 copy_footage_script_threading.py \
   -a YOUR_API_KEY \
@@ -109,12 +123,14 @@ python3 copy_footage_script_threading.py \
 
 ### 🚨 Alert Mode Examples
 
-**Basic: Download all recent alerts**
+#### Basic: Download all recent alerts
+
 ```bash
 python3 copy_footage_script_threading.py -a YOUR_API_KEY --alerts
 ```
 
-**Time-filtered: Alerts from last 24 hours with 1-minute buffer**
+#### Time-filtered: Alerts from last 24 hours with 1-minute buffer
+
 ```bash
 python3 copy_footage_script_threading.py \
   -a YOUR_API_KEY \
@@ -123,7 +139,8 @@ python3 copy_footage_script_threading.py \
   --alert_buffer 60
 ```
 
-**Camera-specific: Alerts from specific camera with debug logging**
+#### Camera-specific: Alerts from specific camera with debug logging
+
 ```bash
 python3 copy_footage_script_threading.py \
   -a YOUR_API_KEY \
@@ -132,7 +149,8 @@ python3 copy_footage_script_threading.py \
   --debug
 ```
 
-**Limited: Last 50 alerts from specific location**
+#### Limited: Last 50 alerts from specific location
+
 ```bash
 python3 copy_footage_script_threading.py \
   -a YOUR_API_KEY \
@@ -141,7 +159,8 @@ python3 copy_footage_script_threading.py \
   --max_alerts 50
 ```
 
-**Date Range: Alerts from specific day**
+#### Date Range: Alerts from specific day
+
 ```bash
 # Get epoch timestamps for January 1, 2024
 START_TIME=$(date -d '2024-01-01 00:00:00' +%s)
@@ -159,6 +178,7 @@ python3 copy_footage_script_threading.py \
 ## 🏗️ Implementation Architecture
 
 ### 🔄 Alert Mode Process Flow
+
 1. **🔍 Fetch Alerts**: Calls `getPolicyAlerts` API to retrieve policy-triggered alerts
 2. **⚡ Process Data**: Extracts timing and device information from each alert
 3. **⏰ Calculate Windows**: Determines start/end times with configurable buffer periods
@@ -166,6 +186,7 @@ python3 copy_footage_script_threading.py \
 5. **📁 Save Files**: Creates alert-specific filenames with metadata
 
 ### 🌐 API Endpoints
+
 | Endpoint | Purpose |
 |----------|---------|
 | `/api/event/getPolicyAlerts` | Retrieve policy alerts |
@@ -175,6 +196,7 @@ python3 copy_footage_script_threading.py \
 | `/api/org/generateFederatedSessionToken` | Authentication for downloads |
 
 ### ⚡ Performance Features
+
 - **🧵 Multi-threading**: ThreadPoolExecutor with 4 concurrent workers
 - **🎯 Smart Processing**: Each camera/alert processed in separate thread
 - **⏱️ Rate Limiting**: 0.1s delay between thread starts
@@ -185,20 +207,23 @@ python3 copy_footage_script_threading.py \
 ## 📁 File Output Patterns
 
 ### 📅 Manual Mode Files
-```
+
+```text
 📁 Manual Mode Output:
 ├── CameraName_uuid123_1672531200_video.mp4          (video only)
 └── CameraName_uuid123_1672531200_videoWithAudio.mp4 (with audio)
 ```
 
 ### 🚨 Alert Mode Files
-```
+
+```text
 📁 Alert Mode Output:
 ├── CameraName_uuid123_20240101_143022_alert_motion_alert456_video.mp4    (video only)
 └── CameraName_uuid123_20240101_143022_alert_motion_alert456_combined.mp4 (with audio)
 ```
 
-**📋 Alert Filename Components:**
+#### 📋 Alert Filename Components
+
 - `CameraName`: Sanitized camera name
 - `uuid123`: Camera UUID
 - `20240101_143022`: Alert start time (YYYYMMDD_HHMMSS)
@@ -210,6 +235,7 @@ python3 copy_footage_script_threading.py \
 ## 🛠️ System Requirements
 
 ### 📦 Python Dependencies
+
 ```txt
 requests>=2.25.1
 urllib3>=1.26.0
@@ -217,6 +243,7 @@ ffmpeg-python>=0.2.0
 ```
 
 ### 💻 System Requirements
+
 - **Python**: 3.6 or higher
 - **FFmpeg**: For audio/video processing
 - **Disk Space**: Plan for ~50MB per minute of HD footage
@@ -226,10 +253,13 @@ ffmpeg-python>=0.2.0
 
 1. **Clone/Download the script**
 2. **Install dependencies**:
+
    ```bash
    pip install -r requirements.txt
    ```
+
 3. **Install FFmpeg**:
+
    ```bash
    # macOS
    brew install ffmpeg
@@ -240,8 +270,10 @@ ffmpeg-python>=0.2.0
    # CentOS/RHEL
    sudo yum install ffmpeg
    ```
+
 4. **Get API Key**: Rhombus Console → Settings → API Management
 5. **Test installation**:
+
    ```bash
    python3 copy_footage_script_threading.py --help
    ```
@@ -263,11 +295,13 @@ ffmpeg-python>=0.2.0
 ### 🔍 Debug Mode
 
 Enable detailed logging with `--debug`:
+
 ```bash
 python3 copy_footage_script_threading.py -a YOUR_API_KEY --alerts --debug
 ```
 
-**Debug output includes:**
+#### Debug output includes
+
 - ✅ API response data
 - ✅ Alert processing steps
 - ✅ Download progress
@@ -276,7 +310,8 @@ python3 copy_footage_script_threading.py -a YOUR_API_KEY --alerts --debug
 
 ### 📊 Monitoring Script Health
 
-**Check if script is working:**
+#### Check if script is working
+
 ```bash
 # Test API connection
 python3 copy_footage_script_threading.py -a YOUR_API_KEY --alerts --max_alerts 1 --debug
@@ -313,7 +348,8 @@ python3 copy_footage_script_threading.py -a YOUR_API_KEY --alerts --alert_buffer
 
 ### 🕐 Time Filtering Strategies
 
-**Last 4 hours of alerts:**
+#### Last 4 hours of alerts
+
 ```bash
 python3 copy_footage_script_threading.py \
   -a YOUR_API_KEY \
@@ -321,7 +357,8 @@ python3 copy_footage_script_threading.py \
   --after_time $(date -d '4 hours ago' +%s)
 ```
 
-**Business hours only (9 AM - 5 PM yesterday):**
+#### Business hours only (9 AM - 5 PM yesterday)
+
 ```bash
 START=$(date -d 'yesterday 09:00:00' +%s)
 END=$(date -d 'yesterday 17:00:00' +%s)
@@ -333,7 +370,8 @@ python3 copy_footage_script_threading.py \
   --before_time $END
 ```
 
-**Weekend alerts only:**
+#### Weekend alerts only
+
 ```bash
 # Saturday
 SAT_START=$(date -d 'last saturday 00:00:00' +%s)
@@ -362,19 +400,22 @@ python3 copy_footage_script_threading.py \
 
 ### ⏰ Automated Scheduling
 
-**Hourly alert check (recommended):**
+#### Hourly alert check (recommended)
+
 ```bash
 # Add to crontab: crontab -e
 0 * * * * cd /path/to/script && /usr/bin/python3 copy_footage_script_threading.py -a YOUR_API_KEY --alerts --after_time $(date -d '1 hour ago' +%s) >> /var/log/rhombus-backup.log 2>&1
 ```
 
-**Daily full backup:**
+#### Daily full backup
+
 ```bash
 # Add to crontab: crontab -e  
 0 2 * * * cd /path/to/script && /usr/bin/python3 copy_footage_script_threading.py -a YOUR_API_KEY -s $(date -d 'yesterday 00:00:00' +%s) -u 86400 >> /var/log/rhombus-backup.log 2>&1
 ```
 
-**Weekly alert summary:**
+#### Weekly alert summary
+
 ```bash
 # Add to crontab: crontab -e
 0 1 * * 1 cd /path/to/script && /usr/bin/python3 copy_footage_script_threading.py -a YOUR_API_KEY --alerts --after_time $(date -d '1 week ago' +%s) --max_alerts 1000 >> /var/log/rhombus-weekly.log 2>&1
@@ -382,7 +423,8 @@ python3 copy_footage_script_threading.py \
 
 ### 📊 Monitoring & Maintenance
 
-**Log rotation setup:**
+#### Log rotation setup
+
 ```bash
 # Create /etc/logrotate.d/rhombus-backup
 /var/log/rhombus-*.log {
@@ -396,7 +438,8 @@ python3 copy_footage_script_threading.py \
 }
 ```
 
-**Disk space monitoring:**
+#### Disk space monitoring
+
 ```bash
 #!/bin/bash
 # disk-check.sh - Add to cron every 6 hours
@@ -406,7 +449,8 @@ if [ $USAGE -gt 85 ]; then
 fi
 ```
 
-**Health check script:**
+#### Health check script
+
 ```bash
 #!/bin/bash
 # health-check.sh - Add to cron every hour
@@ -423,7 +467,8 @@ fi
 
 ### 🔧 Tuning Parameters
 
-**For high-volume environments:**
+#### For high-volume environments
+
 ```bash
 # Increase concurrent workers (modify script)
 # In copy_footage_script_threading.py, line ~686:
@@ -433,7 +478,8 @@ fi
 python3 copy_footage_script_threading.py -a YOUR_API_KEY --alerts --max_alerts 500
 ```
 
-**For limited bandwidth:**
+#### For limited bandwidth
+
 ```bash
 # Use LAN connection when possible (default)
 python3 copy_footage_script_threading.py -a YOUR_API_KEY --alerts
@@ -444,12 +490,14 @@ python3 copy_footage_script_threading.py -a YOUR_API_KEY --alerts --alert_buffer
 
 ### 📊 Resource Planning
 
-**Storage estimation:**
+#### Storage estimation
+
 - **HD footage**: ~50MB per minute
 - **4K footage**: ~150MB per minute  
 - **Audio**: ~1MB per minute (additional)
 
-**Example calculation:**
+#### Example calculation
+
 - 100 alerts/day × 2 minutes average × 50MB = **10GB/day**
 - Monthly storage need: **~300GB**
 - Recommended storage: **1TB** (with rotation)
@@ -458,7 +506,8 @@ python3 copy_footage_script_threading.py -a YOUR_API_KEY --alerts --alert_buffer
 
 ## 🎯 Use Case Scenarios
 
-### 🏢 **Corporate Security**
+### 🏢 Corporate Security
+
 ```bash
 # Monitor all locations during business hours
 python3 copy_footage_script_threading.py \
@@ -469,7 +518,8 @@ python3 copy_footage_script_threading.py \
   --alert_buffer 60
 ```
 
-### 🏪 **Retail Loss Prevention**
+### 🏪 Retail Loss Prevention
+
 ```bash
 # High-frequency monitoring for theft prevention
 python3 copy_footage_script_threading.py \
@@ -479,7 +529,8 @@ python3 copy_footage_script_threading.py \
   --alert_buffer 120
 ```
 
-### 🏭 **Manufacturing Compliance**
+### 🏭 Manufacturing Compliance
+
 ```bash
 # Location-specific safety incident documentation
 python3 copy_footage_script_threading.py \
@@ -489,7 +540,8 @@ python3 copy_footage_script_threading.py \
   --alert_buffer 300
 ```
 
-### 🏠 **Multi-site Management**
+### 🏠 Multi-site Management
+
 ```bash
 # Process each location separately
 for location in LOC1_UUID LOC2_UUID LOC3_UUID; do
@@ -506,16 +558,19 @@ done
 ## 📞 Support & Resources
 
 ### 🔗 API Documentation
+
 - [Rhombus API Docs](https://apidocs.rhombussystems.com/)
 - [Get Locations](https://apidocs.rhombussystems.com/reference/getlocations)
 - [Get Camera Config](https://apidocs.rhombussystems.com/reference/getcameraconfig)
 
 ### 🛠️ Tools
+
 - [Epoch Converter](https://www.epochconverter.com/) - Convert human time to epoch
 - [JSON Formatter](https://jsonformatter.org/) - Format API responses
 - [Cron Generator](https://crontab.guru/) - Create cron schedules
 
 ### 📧 Getting Help
+
 1. **Enable debug mode**: `--debug` flag
 2. **Check logs**: Review error messages
 3. **Verify API key**: Test with simple API calls
