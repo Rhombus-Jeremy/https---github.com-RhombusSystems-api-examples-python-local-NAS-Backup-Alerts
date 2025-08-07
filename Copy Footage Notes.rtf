@@ -1,0 +1,187 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2708
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fmodern\fcharset0 Courier;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue233;\red0\green128\blue0;}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c93333;\cssrgb\c0\c56863\c0;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf0 Rhombus Camera Footage Copy Script - Complete Implementation Guide\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \
+\fs24 The script now supports TWO MODES for downloading camera footage to local NAS storage:\
+\
+\cf2 \ul \ulc2 MODE 1: MANUAL MODE (Original Functionality)\cf0 \ulnone \
+Downloads footage based on specified time ranges - useful for scheduled backups or specific time periods.\
+\
+\cf2 \ul \ulc2 MODE 2: ALERT MODE (New Functionality)\cf0 \ulnone \
+Downloads footage based on policy alerts from Rhombus cameras - captures incidents automatically with configurable buffer times.\
+\
+\cf3 ========================================\cf0 \
+\cf3 MANUAL MODE - Command Line Arguments\cf0 \
+\cf3 ========================================\cf0 \
+\
+\cf2 Required Arguments:\cf0 \
+- -api_key, -a : Rhombus API key from the Rhombus console under \'91API Management\'92. Required for all operations.\
+\
+\cf2 Manual Mode Specific Arguments:\cf0 \
+- -start_time, -s : Start time in epoch seconds. Default: 1 hour ago. Use https://www.epochconverter.com/ for conversion.\
+- -duration, -u : Duration in seconds. Default: 3600 (1 hour).\
+\
+\cf2 Common Arguments (Both Modes):\cf0 \
+- -cert, -c : Path to API certificate (optional)\
+- -private_key, -p : Path to API private key (optional)\
+- -debug, -g : Enable debug logging\
+- -usewan, -w : Use WAN connection instead of LAN (for offsite access)\
+- -location_uuid, -loc : UUID for specific location. Get from: https://apidocs.rhombussystems.com/reference/getlocations\
+- -camera_uuid, -cam : UUID for specific camera. Get from: https://apidocs.rhombussystems.com/reference/getcameraconfig\
+\
+\cf3 ========================================\cf0 \
+\cf3 ALERT MODE - Command Line Arguments\cf0 \
+\cf3 ========================================\cf0 \
+\
+\cf2 Required Arguments:\cf0 \
+- -api_key, -a : Rhombus API key (same as manual mode)\
+- -alerts, -al : Enable alert-based download mode\
+\
+\cf2 Alert Mode Specific Arguments:\cf0 \
+- -max_alerts, -ma : Maximum number of alerts to retrieve (default: 100)\
+- -before_time, -bt : Only get alerts before this timestamp (epoch seconds)\
+- -after_time, -at : Only get alerts after this timestamp (epoch seconds)\
+- -alert_buffer, -ab : Buffer time in seconds before and after each alert (default: 30 seconds)\
+\
+\cf3 ========================================\cf0 \
+\cf3 USAGE EXAMPLES\cf0 \
+\cf3 ========================================\cf0 \
+\
+\cf2 Manual Mode Examples:\cf0 \
+\f1\fs20 # Download last hour from all cameras\
+python3 copy_footage_script_threading.py -a YOUR_API_KEY\
+\
+# Download specific 2-hour period from specific camera\
+python3 copy_footage_script_threading.py -a YOUR_API_KEY -s 1672531200 -u 7200 -cam CAMERA_UUID\
+\
+# Download from all cameras at specific location using WAN\
+python3 copy_footage_script_threading.py -a YOUR_API_KEY -loc LOCATION_UUID -w\
+\f0\fs24 \
+\cf2 Alert Mode Examples:\cf0 \
+\f1\fs20 # Download all recent alerts\
+python3 copy_footage_script_threading.py -a YOUR_API_KEY --alerts\
+\
+# Download alerts from last 24 hours with 1-minute buffer\
+python3 copy_footage_script_threading.py -a YOUR_API_KEY --alerts --after_time 1672444800 --alert_buffer 60\
+\
+# Download alerts from specific camera with debug logging\
+python3 copy_footage_script_threading.py -a YOUR_API_KEY --alerts --camera_uuid CAM_UUID --debug\
+\
+# Download last 50 alerts from specific location\
+python3 copy_footage_script_threading.py -a YOUR_API_KEY --alerts --location_uuid LOC_UUID --max_alerts 50\
+\f0\fs24 \
+\cf3 ========================================\cf0 \
+\cf3 IMPLEMENTATION DETAILS\cf0 \
+\cf3 ========================================\cf0 \
+\
+\cf2 Alert Mode Process Flow:\cf0 \
+1. Calls getPolicyAlerts API endpoint to retrieve policy-triggered alerts\
+2. Processes each alert to extract timing and device information\
+3. Calculates start/end times with configurable buffer periods\
+4. Downloads footage for each alert using same video download process as manual mode\
+5. Creates alert-specific filenames with metadata\
+\
+\cf2 API Endpoints Used:\cf0 \
+- https://api2.rhombussystems.com/api/event/getPolicyAlerts - Retrieves policy alerts\
+- https://api2.rhombussystems.com/api/camera/getMinimalCameraStateList - Gets camera states\
+- https://api2.rhombussystems.com/api/audiogateway/getMinimalAudioGatewayStateList - Gets audio gateways\
+- https://api2.rhombussystems.com/api/camera/getMediaUris - Gets media download URLs\
+- https://api2.rhombussystems.com/api/org/generateFederatedSessionToken - Authentication for media downloads\
+\
+\cf2 Threading and Performance:\cf0 \
+- Uses ThreadPoolExecutor with max 4 concurrent workers\
+- Each camera/alert processed in separate thread for performance\
+- Includes rate limiting (0.1s delay between thread starts)\
+- Supports concurrent downloads of multiple alerts\
+\
+\cf2 File Naming Conventions:\cf0 \
+Manual Mode:\
+- Video only: {camera_name}_{camera_uuid}_{start_time}_video.mp4\
+- With audio: {camera_name}_{camera_uuid}_{start_time}_videoWithAudio.mp4\
+\
+Alert Mode:\
+- Video only: {camera_name}_{camera_uuid}_{timestamp}_alert_{alert_type}_{alert_id}_video.mp4\
+- With audio: {camera_name}_{camera_uuid}_{timestamp}_alert_{alert_type}_{alert_id}_combined.mp4\
+\
+Alert filenames include:\
+- timestamp: When alert-based footage starts (YYYYMMDD_HHMMSS format)\
+- alert_type: Type of alert that triggered the download\
+- alert_id: Unique identifier for the specific alert\
+\
+\cf3 ========================================\cf0 \
+\cf3 SYSTEM REQUIREMENTS\cf0 \
+\cf3 ========================================\cf0 \
+\
+\cf2 Python Dependencies (requirements.txt):\cf0 \
+- requests>=2.25.1\
+- urllib3>=1.26.0\
+- ffmpeg-python>=0.2.0\
+\
+\cf2 System Dependencies:\cf0 \
+- Python 3.6 or higher\
+- FFmpeg (for audio/video processing)\
+\
+\cf2 Installation:\cf0 \
+\f1\fs20 pip install -r requirements.txt\
+\f0\fs24 \
+\cf3 ========================================\cf0 \
+\cf3 TROUBLESHOOTING\cf0 \
+\cf3 ========================================\cf0 \
+\
+\cf2 Common Issues:\cf0 \
+1. "No policy alerts found" - Check time filters and ensure alerts exist in specified timeframe\
+2. "Alert missing timestamp" - Some alerts may have malformed data, script will skip these\
+3. "Failed to retrieve policy alerts" - Verify API key has proper permissions\
+4. FFmpeg errors - Ensure FFmpeg is installed and accessible in PATH\
+\
+\cf2 Debug Mode:\cf0 \
+Use --debug flag to see detailed logging including:\
+- API response data\
+- Alert processing information\
+- Download progress\
+- Error details\
+\
+\cf3 ========================================\cf0 \
+\cf3 ALERT MODE ADVANCED FEATURES\cf0 \
+\cf3 ========================================\cf0 \
+\
+\cf2 Buffer Time Configuration:\cf0 \
+The --alert_buffer parameter adds time before and after each alert:\
+- Default: 30 seconds before and after\
+- Minimum recommended: 10 seconds\
+- Maximum practical: 300 seconds (5 minutes)\
+- Buffer ensures full context around incidents\
+\
+\cf2 Time Filtering:\cf0 \
+Combine --before_time and --after_time for precise time windows:\
+\f1\fs20 # Get alerts from specific day\
+python3 copy_footage_script_threading.py -a API_KEY --alerts --after_time 1672531200 --before_time 1672617600\
+\f0\fs24 \
+\cf2 Error Handling:\cf0 \
+- Script handles malformed alert data gracefully\
+- Skips alerts missing required fields\
+- Continues processing remaining alerts if some fail\
+- Logs all errors for troubleshooting\
+\
+\cf3 ========================================\cf0 \
+\cf3 PRODUCTION DEPLOYMENT\cf0 \
+\cf3 ========================================\cf0 \
+\
+\cf2 Recommended Deployment:\cf0 \
+1. Set up dedicated server/NAS for storage\
+2. Create scheduled cron jobs for regular alert downloads\
+3. Monitor disk space and implement rotation policies\
+4. Use log rotation for application logs\
+5. Set up alerts for script failures\
+\
+\cf2 Example Cron Job (hourly alert check):\cf0 \
+\f1\fs20 0 * * * * /usr/bin/python3 /path/to/copy_footage_script_threading.py -a YOUR_API_KEY --alerts --after_time $(date -d '1 hour ago' +%s)\
+\f0\fs24 \
+This implementation provides comprehensive footage backup capabilities for both scheduled and incident-driven scenarios.\
+}
